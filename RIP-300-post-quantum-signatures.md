@@ -124,11 +124,11 @@ address = "RTC" + sha256(ed25519_pubkey)[:40]
 # Example: RTCa1b2c3d4e5f6789012345678901234567890ab
 
 # New PQ-enabled address
-address = "RTCQ" + sha256(ed25519_pubkey || mldsa44_pubkey)[:39]
-# Example: RTCQa1b2c3d4e5f6789012345678901234567890a
+address = "RTCQ" + sha256(ed25519_pubkey || mldsa44_pubkey)[:40]
+# Example: RTCQa1b2c3d4e5f6789012345678901234567890ab
 ```
 
-Total address length remains 43 characters. The `RTCQ` prefix signals to wallets and explorers that this address requires post-quantum signature verification.
+Total address length is 44 characters. The `RTCQ` prefix signals to wallets and explorers that this address requires post-quantum signature verification.
 
 **Address derivation is deterministic:** Given the same Ed25519 and ML-DSA-44 keypair, the RTCQ address is always the same.
 
@@ -140,44 +140,40 @@ The encrypted keystore format is extended to hold both keypairs:
 {
   "version": 2,
   "address": "RTCQa1b2c3d4...",
-  "classical": {
-    "algorithm": "Ed25519",
-    "public_key": "<32-byte hex>"
-  },
-  "post_quantum": {
-    "algorithm": "ML-DSA-44",
-    "public_key": "<1312-byte hex>"
-  },
+  "legacy_address": "RTCa1b2c3d4...",
+  "ed_public_key": "<32-byte hex>",
+  "pq_public_key": "<1312-byte hex>",
   "salt": "<base64>",
   "nonce": "<base64>",
-  "ciphertext": "<base64, encrypts both private keys>",
+  "ciphertext": "<base64, encrypts ed_private_key + pq_public_key + pq_secret_key + mnemonic>",
   "kdf": "PBKDF2-SHA256",
   "kdf_iterations": 100000,
   "cipher": "AES-256-GCM",
   "created": "2026-04-01T00:00:00Z",
-  "migrated_from": "RTCa1b2c3d4..."
+  "signature_scheme": "hybrid-ed25519-mldsa44"
 }
 ```
 
-The `migrated_from` field links to the original Ed25519-only address, enabling balance migration tracking.
+The encrypted payload contains the private keys plus the mnemonic. Until the backend exposes seeded ML-DSA key generation, the keystore is the authoritative backup for the PQ component.
 
 **Keystore v1 files continue to work** with Ed25519-only wallets until Phase 3 enforcement.
 
 ### 6. BIP39 Seed Derivation
 
-ML-DSA-44 keys are derived from the same BIP39 24-word mnemonic using a distinct derivation path:
+The Phase 1 implementation derives **seed material** for ML-DSA-44 from the same BIP39 24-word mnemonic using a distinct derivation path:
 
 ```python
 # Ed25519 (existing)
-ed25519_seed = PBKDF2(mnemonic, salt="mnemonic" + passphrase, iterations=2048, dklen=32)
+seed = Mnemonic.to_seed(mnemonic, passphrase)
+ed25519_seed = sha256(seed).digest()
 ed25519_keypair = Ed25519.from_seed(ed25519_seed)
 
-# ML-DSA-44 (new)
-pq_seed = PBKDF2(mnemonic, salt="mnemonic-pq" + passphrase, iterations=2048, dklen=32)
-mldsa44_keypair = ML_DSA_44.keygen(seed=pq_seed)
+# ML-DSA-44 (future seeded backend)
+pq_seed_material = HMAC_SHA512(PQ_SEED_SALT, seed)
+mldsa44_keypair = ML_DSA_44.keygen(seed=pq_seed_material)  # not available in pqcrypto today
 ```
 
-Using a different salt (`"mnemonic-pq"`) ensures the PQ key is deterministically derived from the same seed phrase but is cryptographically independent from the Ed25519 key. Users do NOT need to back up a second seed phrase.
+Using distinct PQ seed material keeps the design ready for deterministic restore once the backend supports seeded ML-DSA key generation. In the current Phase 1 implementation, users must back up the encrypted keystore to preserve the PQ keypair.
 
 ### 7. Transaction Format
 
@@ -193,8 +189,10 @@ Using a different salt (`"mnemonic-pq"`) ensures the PQ key is deterministically
   "memo": "Payment",
   "nonce": 1711929600000,
   "signature_scheme": "hybrid-ed25519-mldsa44",
-  "signature": "<2484-byte hex: 64 bytes Ed25519 || 2420 bytes ML-DSA-44>",
-  "public_key": "<1344-byte hex: 32 bytes Ed25519 || 1312 bytes ML-DSA-44>"
+  "signature": "<64-byte hex Ed25519 signature>",
+  "pq_signature": "<2420-byte hex ML-DSA-44 signature>",
+  "public_key": "<32-byte hex Ed25519 public key>",
+  "pq_public_key": "<1312-byte hex ML-DSA-44 public key>"
 }
 ```
 
@@ -210,8 +208,8 @@ The `signature_scheme` field is new. Transactions without this field default to 
   "memo": "Payment",
   "nonce": 1711929600000,
   "signature_scheme": "mldsa44",
-  "signature": "<2420-byte hex>",
-  "public_key": "<1312-byte hex>"
+  "pq_signature": "<2420-byte hex>",
+  "pq_public_key": "<1312-byte hex>"
 }
 ```
 
@@ -229,14 +227,14 @@ def verify_transaction(tx: dict) -> tuple[bool, str]:
         return verify_ed25519(tx["public_key"], tx["signature"], tx_message(tx))
 
     elif scheme == "hybrid-ed25519-mldsa44":
-        ed_pub = tx["public_key"][:64]      # 32 bytes hex
-        pq_pub = tx["public_key"][64:]       # 1312 bytes hex
-        ed_sig = tx["signature"][:128]       # 64 bytes hex
-        pq_sig = tx["signature"][128:]       # 2420 bytes hex
+        ed_pub = tx["public_key"]            # 32 bytes hex
+        pq_pub = tx["pq_public_key"]         # 1312 bytes hex
+        ed_sig = tx["signature"]             # 64 bytes hex
+        pq_sig = tx["pq_signature"]          # 2420 bytes hex
         msg = tx_message(tx)
 
         ed_ok = verify_ed25519(ed_pub, ed_sig, msg)
-        pq_ok = verify_mldsa44(pq_pub, pq_sig, msg)
+        pq_ok = verify_mldsa44(pq_pub, msg, pq_sig) is True
 
         if not ed_ok:
             return False, "ed25519_signature_invalid"
@@ -244,7 +242,7 @@ def verify_transaction(tx: dict) -> tuple[bool, str]:
             return False, "mldsa44_signature_invalid"
 
         # Verify pubkey matches address
-        expected_addr = "RTCQ" + sha256(bytes.fromhex(ed_pub) + bytes.fromhex(pq_pub)).hexdigest()[:39]
+        expected_addr = "RTCQ" + sha256(bytes.fromhex(ed_pub) + bytes.fromhex(pq_pub)).hexdigest()[:40]
         if tx["from_address"] != expected_addr:
             return False, "address_pubkey_mismatch"
 
@@ -253,7 +251,7 @@ def verify_transaction(tx: dict) -> tuple[bool, str]:
     elif scheme == "mldsa44":
         if phase < 3:
             return False, "pq_only_not_yet_accepted"
-        return verify_mldsa44(tx["public_key"], tx["signature"], tx_message(tx))
+        return verify_mldsa44(tx["pq_public_key"], tx_message(tx), tx["pq_signature"])
 
     return False, "unknown_signature_scheme"
 ```
@@ -281,20 +279,16 @@ When present, the server stores the PQ public key in `miner_attest_recent` (new 
 The `pqcrypto` package provides ML-DSA-44 bindings:
 
 ```python
-from pqcrypto.sign.dilithium2 import generate_keypair, sign, verify
+from pqcrypto.sign.ml_dsa_44 import generate_keypair, sign, verify
 
 # Key generation
 public_key, secret_key = generate_keypair()
 
 # Signing
-signature = sign(message, secret_key)
+signature = sign(secret_key, message)
 
 # Verification
-try:
-    verify(message, signature, public_key)
-    valid = True
-except Exception:
-    valid = False
+valid = verify(public_key, message, signature)
 ```
 
 **Fallback:** If `pqcrypto` is unavailable (vintage systems), the `oqs` package (liboqs Python wrapper) provides equivalent functionality:
@@ -316,9 +310,9 @@ valid = verifier.verify(message, signature, public_key)
 
 **Deliverables:**
 
-1. `rustchain_crypto.py` extended with `MLDSAWallet` class
+1. `rustchain_crypto.py` extended with `RustChainPQWallet` class
 2. Keystore v2 format with dual keypair storage
-3. BIP39 seed derivation for ML-DSA-44 (`"mnemonic-pq"` salt)
+3. PQ seed-material derivation for ML-DSA-44 (`PQ_SEED_SALT`) and a future seeded-backend hook
 4. `RTCQ` address generation
 5. All 4 wallet GUIs updated:
    - `rustchain_wallet_gui.py`
@@ -327,9 +321,9 @@ valid = verifier.verify(message, signature, public_key)
    - `rustchain_wallet_founder_secure.py`
 6. `pqcrypto` added to wallet build dependencies
 7. Key binding transaction type defined (not yet enforced)
-8. Wallet migration tool: generate PQ keypair from existing seed phrase
+8. Wallet migration tool: generate PQ keypair from existing seed phrase and persist it in keystore v2
 
-**Acceptance criteria:** A user can create a new wallet with RTCQ address, export/import keystore v2, and restore from the same 24-word seed phrase to get the same RTCQ address. No server changes required.
+**Acceptance criteria:** A user can create a new wallet with an RTCQ address, export/import keystore v2, and restore the same RTCQ address from the keystore. Mnemonic-only deterministic RTCQ restore remains deferred until a seeded ML-DSA backend is adopted. No server changes required.
 
 ### Phase 2: Hybrid Signing (Q1 2027)
 
@@ -430,7 +424,7 @@ Wallets that hold RTC but whose owners have lost access (lost seed phrase, decea
 - **Funds remain on-chain** and visible in the block explorer.
 - **Funds cannot be moved** (no valid signature possible).
 - **Funds are NOT burned** -- they remain in `balances` table.
-- **Recovery:** If the owner later recovers their seed phrase, they can derive the PQ key (same seed, different salt) and bind it, even after Phase 3.
+- **Recovery:** Until a seeded ML-DSA backend exists, recovery requires the Phase 1 encrypted keystore (or another preserved copy of the PQ secret key). Mnemonic-only recovery of the PQ component is deferred.
 
 A quantum attacker who extracts the Ed25519 private key from an abandoned wallet's public key still cannot spend the funds because post-Phase-3 transactions require a PQ signature, and the PQ private key was never published on-chain.
 
@@ -467,7 +461,7 @@ At scale (thousands of miners), the increased data volume may motivate signature
 
 | File | Change |
 |------|--------|
-| `rustchain_crypto.py` | Add `MLDSAWallet` class, hybrid signing, keystore v2 |
+| `rustchain_crypto.py` | Add `RustChainPQWallet` class, hybrid signing, keystore v2 |
 | `rustchain_v2_integrated_v2.2.1_rip200.py` | Hybrid verification in `/wallet/transfer/signed`, key binding endpoint, attestation PQ field |
 | `rustchain_wallet_gui.py` | RTCQ address display, PQ key generation UI |
 | `rustchain_wallet_founder.py` | Same as above |
@@ -482,7 +476,7 @@ At scale (thousands of miners), the increased data volume may motivate signature
 
 Reference implementation will be provided as a pull request to `Scottcjn/rustchain` upon RIP-300 acceptance. The PR will include:
 
-1. `rustchain_crypto.py` with `MLDSAWallet` class (Phase 1)
+1. `rustchain_crypto.py` with `RustChainPQWallet` class (Phase 1)
 2. Keystore v2 read/write (Phase 1)
 3. Unit tests for key derivation, hybrid signing, and verification
 4. Migration tool for existing wallets
@@ -516,7 +510,7 @@ Reference implementation will be provided as a pull request to `Scottcjn/rustcha
 
 To be provided with the reference implementation. Will include:
 
-- Known-answer tests (KAT) for ML-DSA-44 key generation from BIP39 seed
+- Known-answer tests (KAT) for ML-DSA-44 seed-material derivation and keystore-backed restore
 - Hybrid signature generation and verification test cases
 - RTCQ address derivation test vectors
 - Keystore v2 encryption/decryption round-trip tests
