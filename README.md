@@ -1,3 +1,5 @@
+[![BCOS Certified](https://img.shields.io/badge/BCOS-Certified-brightgreen?style=flat)](BCOS.md)
+
 # RustChain Improvement Proposals (RIPs)
 
 Formal specifications for changes to the [RustChain](https://github.com/Scottcjn/Rustchain) protocol.
