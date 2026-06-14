@@ -4,12 +4,28 @@
 
 Formal specifications for changes to the [RustChain](https://github.com/Scottcjn/Rustchain) protocol.
 
-## Active RIPs
+## Current RIP Index
 
-| RIP | Title | Status | Author |
+This repository mirrors the standalone RIP-300 document and links to canonical RIP documents that currently live in the main [RustChain](https://github.com/Scottcjn/Rustchain) repository. Status values below are copied from the referenced RIP documents.
+
+| RIP | Title | Status | Source |
 |-----|-------|--------|--------|
-| [200](https://github.com/Scottcjn/Rustchain) | Round-Robin 1-CPU-1-Vote PoA | Active | Scott Boudreaux |
-| [300](RIP-300-post-quantum-signatures.md) | Post-Quantum Signature Migration | **Draft** | Scott Boudreaux |
+| [0001](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0001-proof-of-antiquity.md) | Proof of Antiquity (PoA) Consensus Specification | Draft | RustChain canonical docs |
+| [0007](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0007-entropy-fingerprinting.md) | Entropy-Based Validator Fingerprinting & Scoring | Active | RustChain canonical docs |
+| [0201](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0201-fleet-immune-system.md) | Fleet Detection Immune System | Deployed | RustChain canonical docs |
+| [0202](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0202-fail-closed-producer-enrollment.md) | Fail-Closed Producer Enrollment Gate | Draft | RustChain canonical docs |
+| [200](https://github.com/Scottcjn/Rustchain) | Round-Robin 1-CPU-1-Vote PoA | Active | README legacy entry |
+| [300](RIP-300-post-quantum-signatures.md) | Post-Quantum Signature Migration | Draft | This repository |
+| [0301](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0301-tip-credits-atlas-economy.md) | Tip Credits + Atlas Land Transfer Economy | Draft / Request for Comments | RustChain canonical docs |
+| [302](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-302-agent-economy.md) | Agent Economy Protocol | Active | RustChain canonical docs |
+| [302-test](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-302-agent-to-agent-test-challenge.md) | Reproducible Agent-to-Agent Transaction Test Challenge | Draft | RustChain canonical docs |
+| [0304](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0304-retro-console-mining.md) | Retro Console Mining via Pico Serial Bridge | Draft | RustChain canonical docs |
+| [0305-A](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0305-solana-spl-token-deployment.md) | Solana SPL Token Deployment for wRTC Bridge | Draft | RustChain canonical docs |
+| [0305-C](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0305-bridge-lock-ledger.md) | Bridge API + Lock Ledger | Draft | RustChain canonical docs |
+| [0305-D](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0305-reward-claim-system.md) | Reward Claim System & Eligibility Flow | Draft | RustChain canonical docs |
+| [0306](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0306-sophia-attestation-inspector.md) | SophiaCore Attestation Inspector | Draft | RustChain canonical docs |
+| [0308](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0308-proof-of-physical-ai.md) | Proof of Physical AI (PPA) | Draft | RustChain canonical docs |
+| [0310](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0310-proof-of-provenance.md) | Proof of Provenance (PoP) | Draft | RustChain canonical docs |
 
 ## RIP-300: Post-Quantum Signature Migration
 
