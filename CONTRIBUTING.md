@@ -10,6 +10,10 @@ Thank you for contributing to this project! Please follow these guidelines to he
 4. **Make** your changes and test them
 5. **Submit** a pull request
 
+## RIP Template
+
+Start new proposals from [`RIP-TEMPLATE.md`](RIP-TEMPLATE.md). The template includes a required `Security Considerations` section so authors document trust boundaries, authentication and authorization impacts, consensus or settlement risks, wallet/key handling, availability concerns, data exposure, and planned mitigations or tests.
+
 ## Code Style
 
 - **Python**: Follow PEP 8; run `black .` and `ruff check .` before committing
