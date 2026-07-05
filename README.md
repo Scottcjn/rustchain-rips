@@ -27,6 +27,7 @@ This repository mirrors the standalone RIP-300 document and links to canonical R
 | [0308](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0308-proof-of-physical-ai.md) | Proof of Physical AI (PPA) | Draft | RustChain canonical docs |
 | [0310](https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0310-proof-of-provenance.md) | Proof of Provenance (PoP) | Draft | RustChain canonical docs |
 | [0311](RIP-0311-scarcity-weighted-rewards.md) | Scarcity-Weighted Reward Distribution with Tenure and Identity-Cap | Draft (Request for Comments and Vote) | This repository |
+| [0312](RIP-0312-sophia-verifiable-oracle.md) | SOPHIA Decoupling — Verifiable Attestation-Oracle Architecture | Draft | This repository |
 
 ## RIP-300: Post-Quantum Signature Migration
 
