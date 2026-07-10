@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RustChain RIP Search</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    body {
+      margin: 0;
+      background: Canvas;
+      color: CanvasText;
+    }
+
+    main {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+    }
+
+    p {
+      max-width: 72ch;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 180px;
+      gap: 12px;
+      align-items: end;
+      margin: 24px 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    input,
+    select {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid color-mix(in srgb, CanvasText 25%, Canvas);
+      border-radius: 6px;
+      background: Canvas;
+      color: CanvasText;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid color-mix(in srgb, CanvasText 18%, Canvas);
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid color-mix(in srgb, CanvasText 14%, Canvas);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: color-mix(in srgb, CanvasText 7%, Canvas);
+    }
+
+    .status {
+      display: inline-block;
+      min-width: 64px;
+      border: 1px solid color-mix(in srgb, CanvasText 24%, Canvas);
+      border-radius: 999px;
+      padding: 2px 8px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .empty {
+      margin-top: 16px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 640px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+      }
+
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+
+      tr {
+        border-bottom: 1px solid color-mix(in srgb, CanvasText 18%, Canvas);
+      }
+
+      td {
+        border-bottom: 0;
+      }
+
+      td::before {
+        display: block;
+        margin-bottom: 2px;
+        font-weight: 700;
+        content: attr(data-label);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>RustChain RIP Search</h1>
+      <p>Filter the current RustChain Improvement Proposal index by keyword or status. Entries are sourced from the repository README and RIP markdown files.</p>
+      <p><a href="README.md">Back to README</a></p>
+    </header>
+
+    <section class="controls" aria-label="RIP filters">
+      <label>
+        Search RIPs
+        <input id="rip-search" type="search" autocomplete="off" placeholder="Search number, title, status, or source">
+      </label>
+      <label>
+        Status
+        <select id="rip-status">
+          <option value="all">All statuses</option>
+        </select>
+      </label>
+    </section>
+
+    <p id="rip-count" aria-live="polite"></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>RIP</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody id="rip-results"></tbody>
+    </table>
+
+    <p id="rip-empty" class="empty" hidden>No RIPs match the current filters.</p>
+  </main>
+  <script src="rip-search.js"></script>
+</body>
+</html>
+

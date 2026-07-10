@@ -4,6 +4,8 @@
 
 Formal specifications for changes to the [RustChain](https://github.com/Scottcjn/Rustchain) protocol.
 
+Browse the current proposal index with the standalone [RIP search and status filter](rip-search.html).
+
 ## Current RIP Index
 
 This repository mirrors the standalone RIP-300 document and links to canonical RIP documents that currently live in the main [RustChain](https://github.com/Scottcjn/Rustchain) repository. Status values below are copied from the referenced RIP documents.
