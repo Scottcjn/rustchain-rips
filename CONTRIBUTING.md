@@ -29,6 +29,16 @@ Start new proposals from [`RIP-TEMPLATE.md`](RIP-TEMPLATE.md). The template incl
 - Ensure all existing tests pass
 - For bounties: add the bounty number to the PR title (e.g., `feat: feature name (bounty #1234)`)
 
+## RIP Index
+
+The search page (`rip-search.html`) renders a static copy of the Current RIP Index that lives in
+`rip-search.js`. When you add or change a RIP row in `README.md`, update that copy in the same PR
+and verify both agree:
+
+```bash
+node tools/check-rip-index.mjs
+```
+
 ## Testing
 
 ```bash

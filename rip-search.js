@@ -113,6 +113,20 @@ const RIP_INDEX = [
     source: "RustChain canonical docs",
     href: "https://github.com/Scottcjn/Rustchain/blob/main/rips/docs/RIP-0310-proof-of-provenance.md",
   },
+  {
+    number: "0311",
+    title: "Scarcity-Weighted Reward Distribution with Tenure and Identity-Cap",
+    status: "Draft (Request for Comments and Vote)",
+    source: "This repository",
+    href: "RIP-0311-scarcity-weighted-rewards.md",
+  },
+  {
+    number: "0312",
+    title: "SOPHIA Decoupling — Verifiable Attestation-Oracle Architecture",
+    status: "Draft",
+    source: "This repository",
+    href: "RIP-0312-sophia-verifiable-oracle.md",
+  },
 ];
 
 const searchInput = document.getElementById("rip-search");
@@ -128,6 +142,8 @@ function normalize(value) {
 function searchableText(rip) {
   return normalize([
     rip.number,
+    // The table renders the number as "RIP-0310", so accept that form too.
+    `RIP-${rip.number}`,
     rip.title,
     rip.status,
     rip.source,
